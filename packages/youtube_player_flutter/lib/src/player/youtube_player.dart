@@ -145,11 +145,21 @@ class YoutubePlayer extends StatefulWidget {
     this.liveUIColor = Colors.red,
     this.topActions,
     this.bottomActions,
+    this.onErrorWidget,
     this.actionsPadding = const EdgeInsets.all(8.0),
     this.thumbnail,
     this.showVideoProgressIndicator = false,
   })  : progressColors = progressColors ?? const ProgressBarColors(),
         progressIndicatorColor = progressIndicatorColor ?? Colors.red;
+
+  /// {@template youtube_player_flutter.onErrorWidget}
+  /// Construct a custom error widget that suits your ui.
+  ///
+  /// Default is null.
+  /// {@endtemplate}
+  final Widget Function(
+          BuildContext context, String errorMessage, String errorCode)?
+      onErrorWidget;
 
   /// Converts fully qualified YouTube Url to video id.
   ///
@@ -241,57 +251,62 @@ class _YoutubePlayerState extends State<YoutubePlayer> {
         child: Container(
           color: Colors.black,
           width: widget.width ?? MediaQuery.of(context).size.width,
-          child: _buildPlayer(
-            errorWidget: Container(
-              color: Colors.black87,
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 40.0, vertical: 20.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.error_outline,
-                        color: Colors.white,
-                      ),
-                      const SizedBox(width: 5.0),
-                      Expanded(
-                        child: Text(
-                          errorString(
-                            controller.value.errorCode,
-                            videoId: controller.metadata.videoId.isNotEmpty
-                                ? controller.metadata.videoId
-                                : controller.initialVideoId,
-                          ),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w300,
-                            fontSize: 15.0,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16.0),
-                  Text(
-                    'Error Code: ${controller.value.errorCode}',
-                    style: const TextStyle(
-                      color: Colors.grey,
-                      fontWeight: FontWeight.w300,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
+          child: _buildPlayer(),
         ),
       ),
     );
   }
 
-  Widget _buildPlayer({required Widget errorWidget}) {
+  Widget _buildErrorWidget(BuildContext context) {
+    final errorMessage = errorString(
+      controller.value.errorCode,
+      videoId: controller.metadata.videoId.isNotEmpty
+          ? controller.metadata.videoId
+          : controller.initialVideoId,
+    );
+    final errorCode = 'Error Code: ${controller.value.errorCode}';
+    return widget.onErrorWidget?.call(context, errorMessage, errorCode) ??
+        Container(
+          color: Colors.black87,
+          padding: const EdgeInsets.symmetric(horizontal: 40.0, vertical: 20.0),
+          width: widget.width ?? MediaQuery.of(context).size.width,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Row(
+                children: [
+                  const Icon(
+                    Icons.error_outline,
+                    color: Colors.white,
+                  ),
+                  const SizedBox(width: 5.0),
+                  Expanded(
+                    child: Text(
+                      errorMessage,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w300,
+                        fontSize: 15.0,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16.0),
+              Text(
+                errorCode,
+                style: const TextStyle(
+                  color: Colors.grey,
+                  fontWeight: FontWeight.w300,
+                ),
+              ),
+            ],
+          ),
+        );
+  }
+
+  Widget _buildPlayer() {
     return AspectRatio(
       aspectRatio: _aspectRatio,
       child: Stack(
@@ -407,7 +422,7 @@ class _YoutubePlayerState extends State<YoutubePlayer> {
             Center(
               child: PlayPauseButton(),
             ),
-          if (controller.value.hasError) errorWidget,
+          if (controller.value.hasError) _buildErrorWidget(),
         ],
       ),
     );
