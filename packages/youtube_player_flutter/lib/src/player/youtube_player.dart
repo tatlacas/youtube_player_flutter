@@ -422,7 +422,7 @@ class _YoutubePlayerState extends State<YoutubePlayer> {
             Center(
               child: PlayPauseButton(),
             ),
-          if (controller.value.hasError) _buildErrorWidget(),
+          if (controller.value.hasError) _buildErrorWidget(context),
         ],
       ),
     );
