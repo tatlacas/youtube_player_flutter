@@ -292,8 +292,6 @@ class _RawYoutubePlayerState extends State<RawYoutubePlayer>
                 if (playerState == 1) {
                     startSendCurrentTimeInterval();
                     sendVideoData(player);
-                } else {
-                    sendVideoData(player);
                 }
             }
 
